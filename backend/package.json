@@ -1,0 +1,30 @@
+{
+  "name": "bodhiki-backend",
+  "version": "1.0.0",
+  "description": "backend for bodhiki application",
+  "main": "main.js",
+  "scripts": {
+    "dev": "nodemon backend.js",
+    "start": "node backend.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "no repo yet"
+  },
+  "keywords": [
+    "bodhiki-backend"
+  ],
+  "author": "Krissh K",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

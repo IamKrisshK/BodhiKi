@@ -1,0 +1,21 @@
+{
+  "name": "bodhiki",
+  "version": "1.0.0",
+  "description": "An application promoting mindfullness and infotainment",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "no repo yet"
+  },
+  "keywords": [
+    "bodhiki"
+  ],
+  "author": "Sruthi Y, Krissh K, Lakshidha P R",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.3.1"
+  }
+}
