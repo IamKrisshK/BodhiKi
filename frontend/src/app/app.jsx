@@ -5,6 +5,7 @@ import DashboardLayout from "../layouts/dashboardLayout";
 import Landing from "../pages/landing";
 import Register from "../features/auth/Register";
 import Home from "../pages/dashboard/home";
+import Settings from "../pages/dashboard/settings";
 import ZenGarden from "../pages/dashboard/zenGarden";
 import Study from "../pages/dashboard/study";
 import ProtectedRoute from "./protRoutes";
@@ -26,6 +27,7 @@ function App() {
             <Route path="/dashboard" element={<Home />} />
             <Route path="/zengarden" element={<ZenGarden />} />
             <Route path="/study" element={<Study />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
       </Routes>

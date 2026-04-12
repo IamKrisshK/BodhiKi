@@ -6,81 +6,111 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
+  const sidebarWidth = collapsed ? 70 : 240;
+
   const isActive = (path) => location.pathname === path;
 
   return (
     <div style={styles.container}>
       
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <aside
         style={{
           ...styles.sidebar,
-          width: collapsed ? "70px" : "240px",
+          width: sidebarWidth,
         }}
       >
         <div style={styles.top}>
-          {!collapsed && <h2 style={styles.title}>Bodhiki</h2>}
+          {!collapsed && (
+            <h2 style={styles.title}>Bodhiki</h2>
+          )}
 
           <button
             style={styles.toggle}
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => setCollapsed((c) => !c)}
           >
-            {collapsed ? "➡️" : "⬅️"}
+            {collapsed ? "➡" : "⬅"}
           </button>
         </div>
 
         <nav style={styles.nav}>
-          <Link style={linkStyle(isActive("/dashboard"), collapsed)} to="/dashboard">
+          <Link
+            to="/dashboard"
+            style={linkStyle(isActive("/dashboard"), collapsed)}
+          >
             🏠 {!collapsed && "Home"}
           </Link>
 
-          <Link style={linkStyle(isActive("/zengarden"), collapsed)} to="/zengarden">
+          <Link
+            to="/zengarden"
+            style={linkStyle(isActive("/zengarden"), collapsed)}
+          >
             🌿 {!collapsed && "Zen Garden"}
           </Link>
 
-          <Link style={linkStyle(isActive("/study"), collapsed)} to="/study">
+          <Link
+            to="/study"
+            style={linkStyle(isActive("/study"), collapsed)}
+          >
             📚 {!collapsed && "Study"}
+          </Link>
+
+          <Link
+            to="/settings"
+            style={linkStyle(isActive("/settings"), collapsed)}
+          >
+            ⚙️ {!collapsed && "Settings"}
           </Link>
         </nav>
       </aside>
 
-      {/* Content */}
-      <main style={styles.main}>
+      {/* MAIN */}
+      <main
+        style={{
+          ...styles.main,
+          marginLeft: sidebarWidth,
+        }}
+      >
         <Outlet />
       </main>
     </div>
   );
 }
-
 const linkStyle = (active, collapsed) => ({
-  padding: theme.spacing.sm,
-  borderRadius: theme.radius.sm,
+  padding: "10px 12px",
+  borderRadius: "8px",
   textDecoration: "none",
-  color: active ? theme.colors.text : theme.colors.textMuted,
-  background: active ? theme.colors.surfaceLight : "transparent",
+  color: active ? "#EBD5AB" : "#8BAE66",
+  background: active ? "rgba(139, 174, 102, 0.15)" : "transparent",
   display: "flex",
   alignItems: "center",
   justifyContent: collapsed ? "center" : "flex-start",
-  gap: theme.spacing.sm,
-  transition: "0.2s",
+  gap: "10px",
+  transition: "0.2s ease",
+  fontSize: "14px",
 });
 
 const styles = {
   container: {
     display: "flex",
     height: "100vh",
-    background: theme.colors.background,
+    background: "#1B211A",
+    color: "#EBD5AB",
   },
 
   sidebar: {
-    background: theme.colors.surface,
-    color: theme.colors.text,
-    padding: theme.spacing.md,
+    position: "fixed",
+    left: 0,
+    top: 0,
+    height: "100vh",
+    background: "#111711",
+    borderRight: "1px solid #2d3b2d",
+    padding: "16px",
     display: "flex",
     flexDirection: "column",
-    gap: theme.spacing.md,
+    gap: "16px",
     transition: "width 0.3s ease",
-    borderRight: `1px solid ${theme.colors.border}`,
+    overflow: "hidden",
   },
 
   top: {
@@ -90,29 +120,31 @@ const styles = {
   },
 
   title: {
-    fontFamily: theme.font.typewriter,
-    fontSize: "20px",
+    fontFamily: "'IBM Plex Mono', monospace",
+    fontSize: "18px",
+    color: "#EBD5AB",
   },
 
   toggle: {
     background: "transparent",
-    border: `1px solid ${theme.colors.border}`,
-    color: theme.colors.text,
+    border: "1px solid #2d3b2d",
+    color: "#8BAE66",
     cursor: "pointer",
     padding: "4px 8px",
-    borderRadius: theme.radius.sm,
+    borderRadius: "6px",
   },
 
   nav: {
     display: "flex",
     flexDirection: "column",
-    gap: theme.spacing.sm,
+    gap: "8px",
+    marginTop: "10px",
   },
 
   main: {
     flex: 1,
-    padding: theme.spacing.lg,
-    background: theme.colors.background,
-    color: theme.colors.text,
+    padding: "24px",
+    transition: "margin-left 0.3s ease",
+    overflowY: "auto",
   },
 };
