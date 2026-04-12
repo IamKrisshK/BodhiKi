@@ -30,28 +30,74 @@ const getFeed = async(req,res, next)=>{
     catch(error){next(error);}
 };
 
-const likePost = async(req,res,next)=>{
-    try{
-        const {postId}=req.params;
-        const currentLikes = await Likes.findOne({
-            user:req.user._id,
-            post:postId
-        });
-        if(currentLikes){
-            await Likes.findOneAndDelete({_id:currentLikes._id});
-            await Posts.findByIdAndUpdate(postId, {$inc:{likes:-1}});
-        }
-        if(!currentLikes){
-            await Likes.create({
-                user:req.user._id,
-                post:postId
-            });
-            await Posts.findByIdAndUpdate(postId, {$inc:{likes:1}});
-        }
-        res.status(201).json({message:"post interacted with!"});
+const delPost = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
 
+    const post = await Posts.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
-    catch(error){next(error);}
+
+    // 🔒 Authorization check
+    if (post.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // 🧹 Clean up related data
+    await Comments.deleteMany({ post: postId });
+    await Likes.deleteMany({ post: postId });
+
+    // 🗑️ Delete post
+    await Posts.deleteOne({ _id: postId });
+
+    res.status(200).json({ message: "Post deleted" });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+const likePost = async (req, res, next) => {
+  try {
+    const { postId } = req.params;
+
+    const existing = await Likes.findOne({
+      user: req.user._id,
+      post: postId,
+    });
+
+    if (existing) {
+      // UNLIKE
+      await Likes.deleteOne({ _id: existing._id });
+      await Posts.findByIdAndUpdate(postId, { $inc: { likes: -1 } });
+
+      return res.status(200).json({ message: "Unliked" });
+    }
+
+    // LIKE (safe)
+    try {
+      await Likes.create({
+        user: req.user._id,
+        post: postId,
+      });
+
+      await Posts.findByIdAndUpdate(postId, { $inc: { likes: 1 } });
+
+      return res.status(201).json({ message: "Liked" });
+
+    } catch (err) {
+      // 🔥 HANDLE DUPLICATE ERROR
+      if (err.code === 11000) {
+        return res.status(200).json({ message: "Already liked" });
+      }
+      throw err;
+    }
+
+  } catch (error) {
+    next(error);
+  }
 };
 
 const addComment = async(req,res,next)=>{
@@ -106,4 +152,4 @@ const getComments = async(req,res,next)=>{
     catch(error){next(error);}
 };
 
-module.exports = {createPost, getFeed, likePost, addComment, delComment, getComments};
+module.exports = {createPost, getFeed, delPost, likePost, addComment, delComment, getComments};
