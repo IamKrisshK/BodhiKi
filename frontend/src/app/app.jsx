@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Login from "../features/auth/Login";
 import PublicLayout from "../layouts/publicLayout";
 import DashboardLayout from "../layouts/dashboardLayout";
@@ -13,25 +13,24 @@ import AuthLayout from "../layouts/authLayout";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<PublicLayout/>}>
-          <Route path="/" element={<Landing />} />
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Landing />} />
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Route>
-        <Route element={<ProtectedRoute />}>
-          <Route element={<DashboardLayout />}>
-            <Route path="/dashboard" element={<Home />} />
-            <Route path="/zengarden" element={<ZenGarden />} />
-            <Route path="/study" element={<Study />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Home />} />
+          <Route path="/zengarden" element={<ZenGarden />} />
+          <Route path="/study" element={<Study />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
-      </Routes>
-    </BrowserRouter>
+      </Route>
+    </Routes>
   );
 }
 

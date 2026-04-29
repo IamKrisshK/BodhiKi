@@ -1,352 +1,269 @@
 import { useEffect, useRef, useState } from "react";
-import { logSession } from "../../features/activity/studyAPI";
+import { theme } from "../../styles/theme";
+/* ───────── CONFIG ───────── */
 
-const TIPS = [
-  "Focus on one task only — remove everything else.",
-  "If distracted, restart from last completed milestone.",
-  "Deep work improves after 7–10 minutes of resistance.",
-  "Don’t multitask. Single-thread your thinking.",
-  "Breathe slowly: 4s inhale, 4s exhale.",
+const DIFFICULTY = { light: 5, medium: 10, heavy: 18 };
+
+const TECHNIQUE = {
+  pomodoro: { label: "Pomodoro", break: 5 },
+  deep: { label: "Deep Work", break: 10 },
+  hardcore: { label: "Hardcore", break: 0 },
+};
+
+const QUOTES = [
+  "Focus is a decision.",
+  "Depth over speed.",
+  "Stay with the task.",
+  "Let distractions pass.",
 ];
 
-export default function Study() {
-  const [seconds, setSeconds] = useState(1500);
-  const [running, setRunning] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
+const rand = (a) => a[Math.floor(Math.random() * a.length)];
+const fmt = (s) =>
+  `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  const [mode, setMode] = useState("focus");
-  const [technique, setTechnique] = useState("pomodoro");
+/* ───────── APP ───────── */
+
+export default function Study() {
+  const [phase, setPhase] = useState("init");
 
   const [milestones, setMilestones] = useState([]);
   const [input, setInput] = useState("");
+  const [difficulty, setDifficulty] = useState("medium");
+  const [technique, setTechnique] = useState("pomodoro");
 
-  const [tip, setTip] = useState(TIPS[0]);
+  const [timeline, setTimeline] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [total, setTotal] = useState(0);
 
-  const timerRef = useRef(null);
-  const totalRef = useRef(1500);
-  const midLogRef = useRef(false);
+  const [running, setRunning] = useState(false);
+  const [quote, setQuote] = useState(QUOTES[0]);
+  const [onBreak, setOnBreak] = useState(false);
 
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  /* ---------------- TIMER ---------------- */
+  const timerRef = useRef();
+  const quoteRef = useRef();
+
+  /* ───────── LOGIC ───────── */
+
+  const addCheckpoint = () => {
+    if (!input.trim()) return;
+    setMilestones((p) => [
+      ...p,
+      {
+        id: Date.now(),
+        text: input,
+        minutes: DIFFICULTY[difficulty],
+      },
+    ]);
+    setInput("");
+  };
+
+  const buildTimeline = () => {
+    if (!milestones.length) return;
+
+    let acc = 0;
+    const breakSec = TECHNIQUE[technique].break * 60;
+    const built = [];
+
+    milestones.forEach((m, i) => {
+      const end = acc + m.minutes * 60;
+      built.push({ type: "focus", label: m.text, start: acc, end });
+      acc = end;
+
+      if (technique !== "hardcore" && i !== milestones.length - 1) {
+        built.push({
+          type: "break",
+          label: "Break",
+          start: acc,
+          end: acc + breakSec,
+        });
+        acc += breakSec;
+      }
+    });
+
+    setTimeline(built);
+    setTotal(acc);
+    setSeconds(built[0]?.end - built[0]?.start);
+    setElapsed(0);
+    setIndex(0);
+    setPhase("run");
+
+    // 🔥 Auto fullscreen
+    setTimeout(() => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      }
+    }, 200);
+  };
 
   useEffect(() => {
     if (!running) return;
 
     timerRef.current = setInterval(() => {
-      setSeconds((t) => {
-        const progress = (totalRef.current - t) / totalRef.current;
-
-        if (progress > 0.5 && !midLogRef.current) {
-          midLogRef.current = true;
-          pushMidSession();
-          rotateTip();
-        }
-
-        if (t <= 1) {
-          clearInterval(timerRef.current);
-          handleEnd();
+      setSeconds((s) => {
+        if (s <= 1) {
+          next();
           return 0;
         }
-
-        return t - 1;
+        return s - 1;
       });
+      setElapsed((e) => e + 1);
     }, 1000);
 
     return () => clearInterval(timerRef.current);
+  }, [running, index]);
+
+  useEffect(() => {
+    if (!running) return;
+
+    quoteRef.current = setInterval(() => {
+      setQuote(rand(QUOTES));
+    }, 180000);
+
+    return () => clearInterval(quoteRef.current);
   }, [running]);
 
-  /* ---------------- SESSION LOGGING ---------------- */
+  const next = () => {
+    const nextIdx = index + 1;
 
-  const pushMidSession = async () => {
-    await logSession({
-      duration: totalRef.current - seconds,
-      technique,
-      milestones,
-      type: "study-mid",
-    });
+    if (nextIdx >= timeline.length) {
+      setRunning(false);
+      return;
+    }
+
+    const nextBlock = timeline[nextIdx];
+    setIndex(nextIdx);
+    setSeconds(nextBlock.end - nextBlock.start);
+    setOnBreak(nextBlock.type === "break");
   };
 
-  const handleEnd = async () => {
+  const skip = () => {
+    const block = timeline[index];
+    if (!block || block.type !== "focus") return;
+
+    setElapsed(block.end);
+    next();
+  };
+
+  const progress = total ? (elapsed / total) * 100 : 0;
+
+  /* ───────── NAV ───────── */
+
+  const canExit = !running;
+
+  const handleBack = () => {
+    if (!canExit) return;
+    setPhase("init");
     setRunning(false);
 
-    await logSession({
-      duration: totalRef.current,
-      technique,
-      milestones,
-      type: "study-end",
-    });
-
-    setMilestones((prev) =>
-      prev.map((m) =>
-        m.done ? m : { ...m, done: false, archived: true }
-      )
-    );
-  };
-
-  /* ---------------- MILESTONES ---------------- */
-
-  const addMilestone = () => {
-    if (!input.trim()) return;
-
-    setMilestones((prev) => [
-      ...prev,
-      { id: Date.now(), text: input, done: false },
-    ]);
-
-    setInput("");
-  };
-
-  const toggleMilestone = (id) => {
-    setMilestones((prev) => {
-      const updated = prev.map((m) =>
-        m.id === id ? { ...m, done: !m.done } : m
-      );
-
-      return updated.sort((a, b) => a.done - b.done);
-    });
-  };
-
-  /* ---------------- TIPS ---------------- */
-
-  const rotateTip = () => {
-    setTip(TIPS[Math.floor(Math.random() * TIPS.length)]);
-  };
-
-  /* ---------------- SESSION TYPES ---------------- */
-
-  const setSession = (type) => {
-    setTechnique(type);
-    setRunning(false);
-    midLogRef.current = false;
-
-    if (type === "pomodoro") {
-      setSeconds(1500);
-      totalRef.current = 1500;
-    } else {
-      setSeconds(3600);
-      totalRef.current = 3600;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
     }
   };
 
-  /* ---------------- FULLSCREEN ---------------- */
+  /* ───────── INIT UI ───────── */
 
-  const toggleFullscreen = () => {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen();
-        document.body.classList.add("zen-fullscreen");
-        setIsFullscreen(true);
-      } else {
-        document.exitFullscreen();
-        document.body.classList.remove("zen-fullscreen");
-        setIsFullscreen(false);
-      }
-    };
+  if (phase === "init") {
+    const canStart = milestones.length > 0;
 
-  /* ---------------- UI ---------------- */
+    return (
+      <div style={theme.root}>
+        <div style={theme.card}>
+          <h2 style={theme.title}>Build Session</h2>
 
-  const format = () => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s < 10 ? "0" : ""}${s}`;
-  };
-
-  const progress =
-    ((totalRef.current - seconds) / totalRef.current) * 100;
-
-  return (
-    <div style={styles.container} className="noise-bg">
-
-      <button style={styles.fullscreen} onClick={toggleFullscreen}>
-        {fullscreen ? "Exit" : "Full"}
-      </button>
-
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h2>Study Mode</h2>
-          <p style={styles.tip}>{tip}</p>
-        </div>
-
-        <div style={styles.timer}>{format()}</div>
-
-        <div style={styles.bar}>
-          <div style={{ ...styles.fill, width: `${progress}%` }} />
-        </div>
-
-        <div style={styles.controls}>
-          <button style={styles.primary} onClick={() => setRunning(!running)}>
-            {running ? "Pause" : "Start"}
-          </button>
-
-          <button style={styles.secondary} onClick={() => setSession("pomodoro")}>
-            Pomodoro
-          </button>
-
-          <button style={styles.secondary} onClick={() => setSession("deep")}>
-            Deep Work
-          </button>
-        </div>
-
-        <div style={styles.milestonesBox}>
-          <div style={styles.inputRow}>
+          <div style={theme.row}>
             <input
+              style={theme.input}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Add milestone"
-              style={styles.input}
+              placeholder="Checkpoint..."
             />
-            <button style={styles.add} onClick={addMilestone}>
+
+            <div style={theme.diff}>
+              {["light", "medium", "heavy"].map((d) => (
+                <button
+                  key={d}
+                  style={theme.diffBtn(difficulty === d)}
+                  onClick={() => setDifficulty(d)}
+                >
+                  {d[0].toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            <button style={theme.button} onClick={addCheckpoint}>
               +
             </button>
           </div>
 
-          <div style={styles.list}>
+          <div style={theme.list}>
             {milestones.map((m) => (
-              <div
-                key={m.id}
-                onClick={() => toggleMilestone(m.id)}
-                style={{
-                  ...styles.item,
-                  opacity: m.done ? 0.5 : 1,
-                  fontStyle: m.done ? "italic" : "normal",
-                  textDecoration: m.done ? "line-through" : "none",
-                }}
-              >
-                <span>{m.done ? "✓" : "○"} {m.text}</span>
+              <div key={m.id} style={theme.item}>
+                {m.text} — {m.minutes}m
               </div>
             ))}
           </div>
+
+          <select
+            style={theme.input}
+            onChange={(e) => setTechnique(e.target.value)}
+          >
+            {Object.entries(TECHNIQUE).map(([k, v]) => (
+              <option key={k}>{v.label}</option>
+            ))}
+          </select>
+
+          <button
+            style={theme.buttonPrimary(canStart)}
+            onClick={buildTimeline}
+            disabled={!canStart}
+          >
+            Start
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  /* ───────── RUN UI ───────── */
+
+  return (
+    <div style={theme.root}>
+      {/* TOP BAR */}
+      <div style={theme.topbar}>
+        <button
+          style={theme.navBtn(canExit)}
+          onClick={handleBack}
+          title={canExit ? "Go back" : "Pause session to exit"}
+        >
+          ← Back
+        </button>
+      </div>
+
+      <div style={theme.session}>
+        <h2 style={theme.title}>{timeline[index]?.label}</h2>
+
+        <div style={theme.timer}>{fmt(seconds)}</div>
+
+        <div style={theme.bar}>
+          <div style={theme.fill(progress)} />
+        </div>
+
+        <div style={theme.quote}>{quote}</div>
+
+        <div style={theme.controls}>
+          <button style={theme.button} onClick={() => setRunning(!running)}>
+            {running ? "Pause" : "Start"}
+          </button>
+
+          <button style={theme.button} onClick={skip}>
+            Skip Early
+          </button>
+        </div>
+
+        {onBreak && <div style={theme.break}>Break</div>}
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#0f1110",
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  fullscreen: {
-    position: "absolute",
-    top: 20,
-    right: 20,
-    background: "transparent",
-    border: "1px solid #8BAE66",
-    color: "#EBD5AB",
-    padding: "6px 10px",
-    borderRadius: 8,
-    cursor: "pointer",
-    zIndex: 10,
-  },
-
-  card: {
-    width: 480,
-    padding: 24,
-    borderRadius: 16,
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(139,174,102,0.2)",
-    backdropFilter: "blur(10px)",
-    display: "flex",
-    flexDirection: "column",
-    gap: 16,
-    zIndex: 2,
-  },
-
-  header: {
-    textAlign: "center",
-  },
-
-  tip: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
-
-  timer: {
-    fontSize: 54,
-    textAlign: "center",
-    color: "#EBD5AB",
-  },
-
-  bar: {
-    height: 6,
-    background: "rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-
-  fill: {
-    height: "100%",
-    background: "#8BAE66",
-    transition: "0.3s",
-  },
-
-  controls: {
-    display: "flex",
-    gap: 8,
-  },
-
-  primary: {
-    flex: 1,
-    padding: 10,
-    background: "#8BAE66",
-    border: "none",
-    borderRadius: 8,
-  },
-
-  secondary: {
-    flex: 1,
-    padding: 10,
-    background: "transparent",
-    border: "1px solid #8BAE66",
-    borderRadius: 8,
-    color: "#EBD5AB",
-  },
-
-  milestonesBox: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-
-  inputRow: {
-    display: "flex",
-    gap: 8,
-  },
-
-  input: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 8,
-    border: "1px solid #333",
-    background: "rgba(0,0,0,0.3)",
-    color: "#fff",
-  },
-
-  add: {
-    padding: "10px 14px",
-    background: "#8BAE66",
-    border: "none",
-    borderRadius: 8,
-  },
-
-  list: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    maxHeight: 160,
-    overflowY: "auto",
-  },
-
-  item: {
-    padding: 8,
-    borderRadius: 8,
-    background: "rgba(255,255,255,0.03)",
-    cursor: "pointer",
-  },
-};

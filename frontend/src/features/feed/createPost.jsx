@@ -10,6 +10,7 @@ export default function CreatePost({ reload }) {
     tags: "",
   });
 
+  const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -25,64 +26,93 @@ export default function CreatePost({ reload }) {
       tags: "",
     });
 
-    setFocused(false);
+    setOpen(false);
     reload();
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        ...theme.container,
-        borderColor: focused
-          ? theme.colors.accent
-          : theme.colors.border,
-      }}
-    >
-      {/* Title */}
-      <input
-        style={theme.title}
-        value={form.title}
-        onFocus={() => setFocused(true)}
-        onChange={(e) => setForm({ ...form, title: e.target.value })}
-        placeholder="Give it a title..."
-      />
+    <>
+      {/* Sticky Top Bar */}
+      <div style={theme.topBar}>
+        {!open && (
+          <button style={theme.openBtn} onClick={() => setOpen(true)}>
+            + Post
+          </button>
+        )}
+      </div>
 
-      {/* Content */}
-      <textarea
-        style={theme.content}
-        value={form.content}
-        onFocus={() => setFocused(true)}
-        onChange={(e) => setForm({ ...form, content: e.target.value })}
-        placeholder="What's on your mind?"
-      />
-
-      {/* Footer */}
-      <div style={theme.footer}>
-        <div style={theme.meta}>
-          <input
-            style={theme.metaInput}
-            value={form.category}
-            onChange={(e) =>
-              setForm({ ...form, category: e.target.value })
-            }
-            placeholder="category"
-          />
-
-          <input
-            style={theme.metaInput}
-            value={form.tags}
-            onChange={(e) =>
-              setForm({ ...form, tags: e.target.value })
-            }
-            placeholder="#tags"
-          />
+      {/* Floating Expandable Panel */}
+      <div
+        style={{
+          ...theme.panel,
+          transform: open ? "scale(1)" : "scale(0.8)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+        }}
+      >
+        {/* Collapse button */}
+        <div style={theme.header}>
+          <button style={theme.collapseBtn} onClick={() => setOpen(false)}>
+            ←
+          </button>
         </div>
 
-        <button style={theme.button} type="submit">
-          Post →
-        </button>
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            ...theme.container,
+            borderColor: focused
+              ? theme.colors.accent
+              : theme.colors.border,
+          }}
+        >
+          <input
+            style={theme.title}
+            value={form.title}
+            onFocus={() => setFocused(true)}
+            onChange={(e) =>
+              setForm({ ...form, title: e.target.value })
+            }
+            placeholder="Give it a title..."
+          />
+
+          <textarea
+            style={theme.content}
+            value={form.content}
+            onFocus={() => setFocused(true)}
+            onChange={(e) =>
+              setForm({ ...form, content: e.target.value })
+            }
+            placeholder="What's on your mind?"
+          />
+
+          <div style={theme.footer}>
+            <div style={theme.meta}>
+              <input
+                style={theme.metaInput}
+                value={form.category}
+                onChange={(e) =>
+                  setForm({ ...form, category: e.target.value })
+                }
+                placeholder="category"
+              />
+
+              <input
+                style={theme.metaInput}
+                value={form.tags}
+                onChange={(e) =>
+                  setForm({ ...form, tags: e.target.value })
+                }
+                placeholder="#tags"
+              />
+            </div>
+
+            <button style={theme.button} type="submit">
+              Post →
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </>
   );
 }

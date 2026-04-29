@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "An application promoting mindfullness and infotainment",
   "main": "main.js",
+  "type": "module",
   "scripts": {
     "test": "node main.js"
   },
