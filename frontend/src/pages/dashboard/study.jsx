@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { theme } from "../../styles/theme";
+import { useActivityTracker } from "../../comp/trackerHook";
 /* ───────── CONFIG ───────── */
 
 const DIFFICULTY = { light: 5, medium: 10, heavy: 18 };

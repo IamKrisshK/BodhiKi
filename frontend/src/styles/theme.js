@@ -130,7 +130,7 @@ form: {
   container: {
     display: "flex",
     flexDirection: "column",
-    background: "#1f261e",
+    background: "#1B211A",
     transition: "0.2s ease",
   },
 
@@ -347,7 +347,41 @@ form: {
     flexDirection: "column",
     gap: 20,
   },
-
+  cardLabel: {
+    opacity: 0.6,
+    fontSize: 12,
+  },
+  cardValue: {
+    fontSize: 22,
+    marginTop: 6,
+  },
+  charts: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 20,
+  },
+  chartBox: {
+    background: "#151a14",
+    padding: 20,
+    borderRadius: 12,
+  },
+  chartCard: {
+    background: "#151a14",
+    padding: 20,
+    borderRadius: 12,
+  },
+  chartContainer: {
+    padding: 40,
+    background: "#1B211A",
+    color: "#EBD5AB",
+    minHeight: "100vh",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 16,
+    marginBottom: 30,
+  },
   session: {
     display: "flex",
     flexDirection: "column",

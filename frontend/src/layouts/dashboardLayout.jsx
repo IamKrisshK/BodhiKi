@@ -56,6 +56,13 @@ export default function DashboardLayout() {
           </Link>
 
           <Link
+            to="/analytics"
+            style={linkStyle(isActive("/analytics"), collapsed)}
+          >
+            📚 {!collapsed && "Analytics"}
+          </Link>
+
+          <Link
             to="/settings"
             style={linkStyle(isActive("/settings"), collapsed)}
           >
