@@ -13,8 +13,7 @@ export default function Login() {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
       navigate("/dashboard"); // ✅ fixed route
-    } catch {
-catch (err) {
+    } catch (err) {
   const message =
     err.response?.data?.message ||   
     err.response?.data?.error ||    
