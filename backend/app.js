@@ -23,5 +23,7 @@ app.use(userRoutes);
 app.use(actRoutes);
 app.use(discoverRoutes);
 app.use(errorHandler);
-
+app.get("/check", (req, res) => {
+  res.status(200).send("Alive");
+});
 module.exports = app;
