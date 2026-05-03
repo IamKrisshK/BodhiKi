@@ -18,8 +18,7 @@ export default function Register() {
     try {
       await registerUser(form);
       navigate("/login");
-    } catch {
-catch (err) {
+    } catch (err) {
   const message =
     err.response?.data?.message ||   
     err.response?.data?.error ||    
