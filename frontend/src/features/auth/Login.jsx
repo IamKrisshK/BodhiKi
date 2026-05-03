@@ -14,7 +14,14 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(res.data.user));
       navigate("/dashboard"); // ✅ fixed route
     } catch {
-      alert("Login failed");
+catch (err) {
+  const message =
+    err.response?.data?.message ||   
+    err.response?.data?.error ||    
+    err.message ||                   
+    "Login failed";
+
+  alert(message);
     }
   };
 
