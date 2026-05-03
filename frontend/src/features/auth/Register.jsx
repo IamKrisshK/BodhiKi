@@ -19,7 +19,14 @@ export default function Register() {
       await registerUser(form);
       navigate("/login");
     } catch {
-      alert("Registration failed");
+catch (err) {
+  const message =
+    err.response?.data?.message ||   
+    err.response?.data?.error ||    
+    err.message ||                  
+    "Registration failed";
+
+  alert(message);
     }
   };
 
