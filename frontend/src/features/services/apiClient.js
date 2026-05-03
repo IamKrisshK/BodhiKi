@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/backend",
+  baseURL: "https://bodhi-ki-backend.vercel.app/",
 });
 
 api.interceptors.request.use((config) => {
