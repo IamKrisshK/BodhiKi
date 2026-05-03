@@ -9,7 +9,7 @@ const errorHandler = require("./mare/errorHandler");
 
 const app = express();
 app.use(cors({
-  origin: "https://bodhi-ki.vercel.app/",
+  origin: "https://bodhi-ki.vercel.app",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
